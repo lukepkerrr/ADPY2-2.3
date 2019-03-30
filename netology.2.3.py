@@ -15,37 +15,50 @@ def create_db(): # создает таблицы
             curs.execute('CREATE TABLE student_course ('
                          'id serial PRIMARY KEY,'
                          'student_id INTEGER REFERENCES student(id),'
-                         'couse_id INTEGER REFERENCES course(id))')
-            print('БД созданы')
+                         'course_id INTEGER REFERENCES course(id))')
+            print('Таблицы созданы')
 
-def delete_bd(): #удаляет таблицы (для тестов)
+def delete_db(): #удаляет таблицы (для тестов)
     with psycopg2.connect('dbname=netology user=user_netology password=123') as conn:
         with conn.cursor() as curs:
             curs.execute('DROP TABLE student_course')
             curs.execute('DROP TABLE student')
             curs.execute('DROP TABLE course')
-            print('БД удалены')
+            print('Таблицы удалены')
 
 def get_students(course_id): # возвращает студентов определенного курса
     with psycopg2.connect('dbname=netology user=user_netology password=123') as conn:
         with conn.cursor() as curs:
-            curs.execute('select student.id, student.name from course join student_course on student.id = student_course. where course.id = %s', (course, ))
-            print(curs.fetchone()[1])
+            curs.execute('select student.name from student join student_course on student.id = student_course.student_id join course on course.id = student_course.course_id where course.id = %s', (course_id, ))
+            print(curs.fetchall())
 
 def add_students(course_id, students): # создает студентов и записывает их на курс
-    pass
+    conn = psycopg2.connect('dbname=netology user=user_netology password=123')
+    curs = conn.cursor()
 
+    for student in students:
+        curs.execute('insert into student (id, name, gpa, birth) values (%s, %s, %s, %s)',
+                     (student['id'], student['name'], student['gpa'], student['birth']))
+
+    for student in students:
+        curs.execute('insert into student_course (student_id, course_id) values (%s, %s)',
+                     (student['id'], course_id))
+
+    conn.commit()
+    print('Все студенты успешно записаны')
 
 def add_student(student): # просто создает студента
     with psycopg2.connect('dbname=netology user=user_netology password=123') as conn:
         with conn.cursor() as curs:
-            curs.execute('insert into student (id, name) values (%s, %s)', (course['id'], course['name']))
+            curs.execute('insert into student (id, name, gpa, birth) values (%s, %s, %s, %s)',
+                         (student['id'], student['name'], student['gpa'], student['birth']))
             print('Курс успешно добавлен')
 
 def add_course(course): # создает курс
     with psycopg2.connect('dbname=netology user=user_netology password=123') as conn:
         with conn.cursor() as curs:
-            curs.execute('insert into course (id, name, gpa, birth) values (%s, %s, %s, %s)', (student['id'], student['name'], student['gpa'], student['birth']))
+            curs.execute('insert into course (id, name) values (%s, %s)',
+                         (course['id'], course['name']))
             print('Студент успешно добавлен')
 
 def get_student(student_id):
@@ -86,10 +99,15 @@ course_for_test_2 = {
     'name': 'Курс 2'
 }
 
+students_list_for_test = [student_for_test_1, student_for_test_2, student_for_test_3]
 
-#create_db()
-#delete_bd()
+# create_db()
+# add_course(course_for_test_1)
+# add_course(course_for_test_2)
+# add_students(1, students_list_for_test)
+#get_students(1)
+#delete_db()
 
 
 #add_student(student_for_test)
-get_student(1)
+#get_student(1)
