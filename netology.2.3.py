@@ -2,6 +2,10 @@ import psycopg2
 
 CONNECT = 'dbname=netology user=user_netology password=123'
 
+def command_for_add_student(cursor, student):
+    cursor.execute('insert into student (name, gpa, birth) values (%s, %s, %s) RETURNING id',
+                 (student['name'], student['gpa'], student['birth']))
+    return cursor.fetchone()[0]
 
 def create_db(): # создает таблицы
     with psycopg2.connect(CONNECT) as conn:
@@ -16,8 +20,8 @@ def create_db(): # создает таблицы
                          'name varchar(100));')
             curs.execute('CREATE TABLE IF NOT EXISTS student_course ('
                          'id serial PRIMARY KEY,'
-                         'student_id INTEGER REFERENCES student(id),'
-                         'course_id INTEGER REFERENCES course(id))')
+                         'student_id INTEGER REFERENCES student(id) ON DELETE CASCADE,'
+                         'course_id INTEGER REFERENCES course(id) ON DELETE CASCADE)')
             print('Таблицы созданы')
 
 def delete_db(): #удаляет таблицы (для тестов)
@@ -37,9 +41,7 @@ def get_students(course_id): # возвращает студентов опре�
 def add_student(student): # просто создает студента
     with psycopg2.connect(CONNECT) as conn:
         with conn.cursor() as curs:
-            curs.execute('insert into student (name, gpa, birth) values (%s, %s, %s) RETURNING id',
-                         (student['name'], student['gpa'], student['birth']))
-            return curs.fetchone()[0]
+            return command_for_add_student(curs, student)
 
 def add_students(course_id, students): # создает студентов и записывает их на курс
     conn = psycopg2.connect(CONNECT)
@@ -51,7 +53,7 @@ def add_students(course_id, students): # создает студентов и з
         print('Курс не найден')
     else:
         for student in students:
-            curs.execute('insert into student_course (student_id, course_id) values (%s, %s)', (add_student(student), course_id))
+            curs.execute('insert into student_course (student_id, course_id) values (%s, %s)', (command_for_add_student(curs, student), course_id))
         print('Все студенты успешно записаны')
 
     conn.commit()
