@@ -44,19 +44,18 @@ def add_student(student): # просто создает студента
             return command_for_add_student(curs, student)
 
 def add_students(course_id, students): # создает студентов и записывает их на курс
-    conn = psycopg2.connect(CONNECT)
-    curs = conn.cursor()
+    with psycopg2.connect(CONNECT) as conn:
+        with conn.cursor() as curs:
 
-    curs.execute('select * from course where course.id = (%s)', (course_id, ))
+            curs.execute('select * from course where course.id = (%s)', (course_id, ))
 
-    if not curs.fetchone():
-        print('Курс не найден')
-    else:
-        for student in students:
-            curs.execute('insert into student_course (student_id, course_id) values (%s, %s)', (command_for_add_student(curs, student), course_id))
-        print('Все студенты успешно записаны')
+            if not curs.fetchone():
+                print('Курс не найден')
+            else:
+                for student in students:
+                    curs.execute('insert into student_course (student_id, course_id) values (%s, %s)', (command_for_add_student(curs, student), course_id))
+                print('Все студенты успешно записаны')
 
-    conn.commit()
 
 def add_course(course): # создает курс
     with psycopg2.connect(CONNECT) as conn:
